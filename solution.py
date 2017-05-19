@@ -30,9 +30,9 @@ def naked_twins(values):
     # Eliminate the naked twins as possibilities for their peers
 
 
-def cross(A, B):
+def cross(a, b):
     """Cross product of elements in A and elements in B."""
-    return [s + t for s in A for t in B]
+    return [s + t for s in a for t in b]
 
 
 def grid_values(grid):
@@ -110,15 +110,64 @@ def eliminate(values):
 
 
 def only_choice(values):
-    pass
+    # check how to put all this in other part
+    cols = '123456789'
+    rows = 'ABCDEFGHI'
+
+    row_units = [cross(r, cols) for r in rows]
+    column_units = [cross(rows, c) for c in cols]
+    square_units = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
+    unitlist = row_units + column_units + square_units
+    #####
+    for unit in unitlist:
+        for digit in '123456789':
+            dplaces = [box for box in unit if digit in values[box]]
+            if len(dplaces) == 1:
+                values[dplaces[0]] = digit
+    return values
 
 
 def reduce_puzzle(values):
-    pass
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        values = eliminate(values)
+
+        # Your code here: Use the Only Choice Strategy
+        values = only_choice(values)
+
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
 
 
 def search(values):
-    pass
+    cols = '123456789'
+    rows = 'ABCDEFGHI'
+
+    boxes = cross(rows, cols)
+    values = reduce_puzzle(values)
+    if values is False:
+        return False  ## Failed earlier
+    if all(len(values[s]) == 1 for s in boxes):
+        return values  ## Solved!
+    # Choose one of the unfilled squares with the fewest possibilities
+    n, s = min((len(values[s]), s) for s in boxes if len(values[s]) > 1)
+    # Now use recurrence to solve each one of the resulting sudokus, and
+    for value in values[s]:
+        new_sudoku = values.copy()
+        new_sudoku[s] = value
+        attempt = search(new_sudoku)
+        if attempt:
+            return attempt
 
 
 def solve(grid):
@@ -130,25 +179,15 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
-    values = grid_values(grid)
+    return search(grid_values(grid))
 
-    # while there are values to eliminate
-    while True:
-        # eliminate values
-        eliminated_values = eliminate(values)
-        if values == eliminated_values:
-            break
-        else:
-            values = eliminated_values
-
-    return values
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    #display(solve(diag_sudoku_grid))
+    display(solve(diag_sudoku_grid))
 
-    test_sudoku = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
-    display(solve(test_sudoku))
+    #test_sudoku = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
+    #display(solve(test_sudoku))
 
     #try:
     #    from visualize import visualize_assignments
