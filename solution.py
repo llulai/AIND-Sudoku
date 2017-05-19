@@ -1,4 +1,23 @@
+from collections import Counter
+
 assignments = []
+
+
+def cross(a, b):
+    """Cross product of elements in A and elements in B."""
+    return [s + t for s in a for t in b]
+
+cols = '123456789'
+rows = 'ABCDEFGHI'
+
+boxes = cross(rows, cols)
+row_units = [cross(r, cols) for r in rows]
+column_units = [cross(rows, c) for c in cols]
+square_units = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
+diagonal_units = [[r + c for r, c in zip(rows, cols)], [r + c for r, c in zip(rows, reversed(cols))]]
+unitlist = row_units + column_units + square_units + diagonal_units
+units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+peers = dict((s, set(sum(units[s], [])) - set([s])) for s in boxes)
 
 
 def assign_value(values, box, value):
@@ -25,14 +44,18 @@ def naked_twins(values):
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
+    # for each unit
+    for unit in unitlist:
+        # fin the twins in the unit
+        twins = [k for k, v in Counter([values[box] for box in unit if len(values[box]) == 2]).items() if v == 2]
+        # for each twin in the unit
+        for pair in twins:
+            for digit in pair:
+                for box in unit:
+                    if values[box] != pair:
+                        values = assign_value(values, box, values[box].replace(digit, ''))
 
-    # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
-
-
-def cross(a, b):
-    """Cross product of elements in A and elements in B."""
-    return [s + t for s in a for t in b]
+    return values
 
 
 def grid_values(grid):
@@ -45,10 +68,7 @@ def grid_values(grid):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    cols = '123456789'
-    rows = 'ABCDEFGHI'
 
-    boxes = cross(rows, cols)
     sudoku_dict = {}
     for cell, box in zip(grid, boxes):
         sudoku_dict[box] = cell if cell in cols else cols
@@ -61,11 +81,6 @@ def display(values):
     Args:
         values(dict): The sudoku in dictionary form
     """
-
-    cols = '123456789'
-    rows = 'ABCDEFGHI'
-
-    boxes = cross(rows, cols)
 
     width = 1 + max(len(values[s]) for s in boxes)
     line = '+'.join(['-' * (width * 3)] * 3)
@@ -88,20 +103,6 @@ def eliminate(values):
         Resulting Sudoku in dictionary form after eliminating values.
     """
 
-    # check how to put all this in other part
-    cols = '123456789'
-    rows = 'ABCDEFGHI'
-
-    boxes = cross(rows, cols)
-    row_units = [cross(r, cols) for r in rows]
-    column_units = [cross(rows, c) for c in cols]
-    square_units = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
-    diagonal_units = [[r + c for r, c in zip(rows, cols)], [r + c for r, c in zip(rows, reversed(cols))]]
-    unitlist = row_units + column_units + square_units + diagonal_units
-    units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
-    peers = dict((s, set(sum(units[s], [])) - set([s])) for s in boxes)
-    ##################
-
     solved_values = [box for box in values.keys() if len(values[box]) == 1]
     for box in solved_values:
         digit = values[box]
@@ -112,16 +113,6 @@ def eliminate(values):
 
 
 def only_choice(values):
-    # check how to put all this in other part
-    cols = '123456789'
-    rows = 'ABCDEFGHI'
-
-    row_units = [cross(r, cols) for r in rows]
-    column_units = [cross(rows, c) for c in cols]
-    square_units = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
-    diagonal_units = [[r + c for r, c in zip(rows, cols)], [r + c for r, c in zip(rows, reversed(cols))]]
-    unitlist = row_units + column_units + square_units + diagonal_units
-    #####
     for unit in unitlist:
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
@@ -153,10 +144,7 @@ def reduce_puzzle(values):
 
 
 def search(values):
-    cols = '123456789'
-    rows = 'ABCDEFGHI'
 
-    boxes = cross(rows, cols)
     values = reduce_puzzle(values)
     if values is False:
         return False  ## Failed earlier
@@ -188,9 +176,6 @@ def solve(grid):
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
     display(solve(diag_sudoku_grid))
-
-    #test_sudoku = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
-    #display(solve(test_sudoku))
 
     try:
         from visualize import visualize_assignments
