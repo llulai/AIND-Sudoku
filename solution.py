@@ -105,7 +105,8 @@ def eliminate(values):
     for box in solved_values:
         digit = values[box]
         for peer in peers[box]:
-            values[peer] = values[peer].replace(digit, '')
+            value = values[peer].replace(digit, '')
+            values = assign_value(values, peer, value)
     return values
 
 
@@ -123,7 +124,7 @@ def only_choice(values):
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
             if len(dplaces) == 1:
-                values[dplaces[0]] = digit
+                values = assign_value(values, dplaces[0], digit)
     return values
 
 
@@ -189,11 +190,11 @@ if __name__ == '__main__':
     #test_sudoku = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'
     #display(solve(test_sudoku))
 
-    #try:
-    #    from visualize import visualize_assignments
-    #    visualize_assignments(assignments)
+    try:
+        from visualize import visualize_assignments
+        visualize_assignments(assignments)
 
-    #except SystemExit:
-    #    pass
-    #except:
-    #    print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
+    except SystemExit:
+        pass
+    except:
+        print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
